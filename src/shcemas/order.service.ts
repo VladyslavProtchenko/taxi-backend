@@ -1,7 +1,6 @@
 import { Model } from "mongoose";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { CreateOrderDTO } from "../dto/order.dto";
 import { Order } from "src/shcemas/order.schema";
 import { Baggage } from "src/shcemas/baggage.schema";
 import { Pets } from "src/shcemas/pets.schema";
@@ -10,6 +9,7 @@ import { Sport } from "src/shcemas/sport.schema";
 import {  MailerService } from '@nestjs-modules/mailer';
 import ical from 'ical-generator'
 import * as moment from 'moment';
+import { CreateTaxiDTO } from "src/dto/taxi.dto";
 
 @Injectable()
 export class OrderService {
@@ -25,12 +25,15 @@ export class OrderService {
 
 
 
-    async create(createOrderDTO: CreateOrderDTO) {
+    async create(data: CreateTaxiDTO[]) {
 
+        
+        const emails:{[key:string]: CreateTaxiDTO[]} = {}
+        
         //map each car and make different functions
-        createOrderDTO.cars.map(item=>{
+        data.map(item=>{
 
-            //Create all database records, filter with zero quantity and create_________________________________________________________
+            // //Create all database records, filter with zero quantity and create_________________________________________________________
             const createdOrder = new this.orderModel({ status: 'active', ...item })
             item.baggage.filter(item=> item.quantity).map( item => new this.bagModel({ ...item, orderId: createdOrder.id }).save())
             item.carSeats.filter(item=> item.quantity).map(item => new this.seatsModel({ ...item, orderId: createdOrder.id }).save())
@@ -38,29 +41,31 @@ export class OrderService {
             item.pets.filter(item=> item.quantity).map(item =>new this.petsModel({ ...item, orderId: createdOrder.id }).save())
             createdOrder.save()
 
-            const parsedDate = moment(item.date +" "+ item.time , 'DD/MM/YYYY HH:mm');
-            console.log(parsedDate.toISOString())
-            //create event for ICalendar________________________________________________________________________________________________
-            function createICalEvent(){
-                const calendar = ical({name: 'My Event'})
+
+            emails[item.email] = emails[item.email] ? [...emails[item.email], item] : [item]
+
+
+        })
+
+        Object.values(emails).map(item=>{
+            const calendar = ical({name: 'My Order'})
+
+            item.map((car,index) => {
+                const parsedDate = moment(car.date +" "+ car.time , 'MM/DD/YYYY HH:mm');
+
                 calendar.createEvent({
-                    start: new Date(parsedDate.toISOString()),
-                    end: new Date(parsedDate.add(1, 'hour').toISOString()),
-                    summary: 'Taxi',
-                    description: 'You ordered beautiful taxi',
+                    start: new Date(parsedDate.toLocaleString()),
+                    end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
+                    summary: `taxi #${index}`,
+                    description: `You ordered beautiful taxi ${index}`,
                     location: 'you soul'
                 })
-                return calendar;
-            }
-            
-            const calendar = createICalEvent()
+            })
 
             
-
-            //Send email__________________________________________________________________________________________________________________
             this.mailerService.sendMail({
-                to: item.email || 'test@gmail.com',
-                from: "vladyslav25cm@gmail.com",
+                to: item[0].email,
+                from: "testTaxiemailm@gmail.com",
                 subject: "test emails",
                 text: "Hi Malek, this is the test email",
                 // html: "<b>fuck you, Bitch!</b>",
@@ -72,6 +77,11 @@ export class OrderService {
                     },
                 ],
             });
+
         })
+
+        // console.log(emails)
+
+        return {status: 200, text: 'working mazafaka'}
     }
 }
