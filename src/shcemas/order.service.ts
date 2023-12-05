@@ -65,10 +65,9 @@ export class OrderService {
             
             this.mailerService.sendMail({
                 to: item[0].email,
-                from: "testTaxiemailm@gmail.com",
+                from: "AndriiIlkiv@gmail.com",
                 subject: "test emails",
                 text: "Hi Malek, this is the test email",
-                // html: "<b>fuck you, Bitch!</b>",
                 attachments: [
                     {
                         filename: "event.ics",

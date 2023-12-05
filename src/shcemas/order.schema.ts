@@ -85,17 +85,19 @@ export class Order  {
     @Prop()
     icon2: number;
 
-    @Prop()
-    flight: string;
+    @Prop({type: { type: String}})
+    flight: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
 
-    @Prop()
-    flight2: string;
-
-    @Prop()
-    airlines: string;
-
-    @Prop()
-    airlinesBack: string;
+    @Prop({type: { type: String}})
+    flight2: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
 
     @Prop()
     departure: string;
@@ -136,17 +138,19 @@ export class Order  {
     @Prop()
     icon2R: number;
 
-    @Prop()
-    flightR: string;
+    @Prop({type: { type: String}})
+    flightR: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
 
-    @Prop()
-    flight2R: string;
-
-    @Prop()
-    airlinesR: string;
-
-    @Prop()
-    airlinesBackR: string;
+    @Prop({type: { type: String}})
+    flight2R: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
 
     @Prop()
     departureR: string;

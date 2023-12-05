@@ -30,11 +30,17 @@ export class CreateTaxiDTO {
 
     readonly icon: number;
     readonly icon2: number;
-    readonly flight: string;
-    readonly flight2: string;
+    readonly flight: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
+    readonly flight2: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
 
-    readonly airlines: string;
-    readonly airlinesBack: string;
 
     readonly departure: string;
     readonly departure2: string;
@@ -55,10 +61,16 @@ export class CreateTaxiDTO {
 
     readonly iconR: number;
     readonly icon2R: number;
-    readonly flightR: string;
-    readonly flight2R: string;
-    readonly airlinesR: string;
-    readonly airlinesBackR: string;
+    readonly flightR: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
+    readonly flight2R: {
+        title: string;
+        prefix: string;
+        number: string;
+    };
     readonly departureR: string;
     readonly departure2R: string;
 

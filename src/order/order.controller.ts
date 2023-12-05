@@ -12,7 +12,7 @@ export class OrderController {
     }
 
     @Get()
-    getAnswer(){
+    getOrder(){
         return 'working mazafaka'
     }
 
