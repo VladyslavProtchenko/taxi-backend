@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { OrderController } from "./order.controller";
-import { OrderService } from "../shcemas/order.service";
+import { OrderService } from "./order.service";
 import { MongooseModule } from '@nestjs/mongoose';
 import { SportSchema } from "src/shcemas/sport.schema";
 import { BaggageSchema } from "src/shcemas/baggage.schema";

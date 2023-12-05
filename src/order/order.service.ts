@@ -31,7 +31,7 @@ export class OrderService {
         const emails:{[key:string]: CreateTaxiDTO[]} = {}
         
         //map each car and make different functions
-        data.map(item=>{
+        data.map((item,index)=>{
 
             // //Create all database records, filter with zero quantity and create_________________________________________________________
             const createdOrder = new this.orderModel({ status: 'active', ...item })
@@ -41,28 +41,16 @@ export class OrderService {
             item.pets.filter(item=> item.quantity).map(item =>new this.petsModel({ ...item, orderId: createdOrder.id }).save())
             createdOrder.save()
 
-
-            emails[item.email] = emails[item.email] ? [...emails[item.email], item] : [item]
-
-
-        })
-
-        Object.values(emails).map(item=>{
             const calendar = ical({name: 'My Order'})
-
-            item.map((car,index) => {
-                const parsedDate = moment(car.date +" "+ car.time , 'MM/DD/YYYY HH:mm');
-
-                calendar.createEvent({
-                    start: new Date(parsedDate.toLocaleString()),
-                    end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
-                    summary: `taxi #${index}`,
-                    description: `You ordered beautiful taxi ${index}`,
-                    location: 'you soul'
-                })
+            const parsedDate = moment(item.date +" "+ item.time , 'MM/DD/YYYY HH:mm');
+            calendar.createEvent({
+                start: new Date(parsedDate.toLocaleString()),
+                end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
+                summary: `taxi #${index}`,
+                description: `You ordered beautiful taxi ${index}`,
+                location: 'you soul'
             })
 
-            
             this.mailerService.sendMail({
                 to: item[0].email,
                 from: "AndriiIlkiv@gmail.com",
@@ -78,6 +66,38 @@ export class OrderService {
             });
 
         })
+
+        // Object.values(emails).map(item=>{
+        //     const calendar = ical({name: 'My Order'})
+
+        //     item.map((car,index) => {
+        //         const parsedDate = moment(car.date +" "+ car.time , 'MM/DD/YYYY HH:mm');
+
+        //         calendar.createEvent({
+        //             start: new Date(parsedDate.toLocaleString()),
+        //             end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
+        //             summary: `taxi #${index}`,
+        //             description: `You ordered beautiful taxi ${index}`,
+        //             location: 'you soul'
+        //         })
+        //     })
+
+            
+        //     this.mailerService.sendMail({
+        //         to: item[0].email,
+        //         from: "AndriiIlkiv@gmail.com",
+        //         subject: "test emails",
+        //         text: "Hi Malek, this is the test email",
+        //         attachments: [
+        //             {
+        //                 filename: "event.ics",
+        //                 content: calendar.toString(),
+        //                 method: "REQUEST",
+        //             },
+        //         ],
+        //     });
+
+        // })
 
         // console.log(emails)
 
