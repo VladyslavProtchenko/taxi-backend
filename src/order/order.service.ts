@@ -6,101 +6,178 @@ import { Baggage } from "src/shcemas/baggage.schema";
 import { Pets } from "src/shcemas/pets.schema";
 import { Seats } from "src/shcemas/seats.schema";
 import { Sport } from "src/shcemas/sport.schema";
-import {  MailerService } from '@nestjs-modules/mailer';
-import ical from 'ical-generator'
-import * as moment from 'moment';
-import { CreateTaxiDTO } from "src/dto/taxi.dto";
+import { MailerService } from "@nestjs-modules/mailer";
+import ical from "ical-generator";
+import * as moment from "moment";
+import { TaxiDTO } from "src/dto/taxi.dto";
+import { User } from "src/shcemas/user.schema";
+import { emailTemplate } from "./emailTemplate";
 
 @Injectable()
 export class OrderService {
-
     constructor(
-        @InjectModel('order') private orderModel: Model<Order>, 
-        @InjectModel('baggage') private bagModel: Model<Baggage>,
-        @InjectModel('pets') private petsModel: Model<Pets>,
-        @InjectModel('seats') private seatsModel: Model<Seats>,
-        @InjectModel('sport') private sportModel: Model<Sport>,
-        private readonly mailerService: MailerService,
-        ) {}
+        @InjectModel("order") private orderModel: Model<Order>,
+        @InjectModel("baggage") private bagModel: Model<Baggage>,
+        @InjectModel("pets") private petsModel: Model<Pets>,
+        @InjectModel("seats") private seatsModel: Model<Seats>,
+        @InjectModel("sport") private sportModel: Model<Sport>,
+        @InjectModel("user") private userModel: Model<User>,
+        private readonly mailerService: MailerService
+    ) {}
 
+    async create(data: TaxiDTO[]) {
+        const groupedOrders:{[key:string]:TaxiDTO[]} = {}
+        const users = [];
+        const orders = [];
+        const responses = [];
 
-
-    async create(data: CreateTaxiDTO[]) {
-
+        //Group orders by email address
+        for await (const order of data) { groupedOrders[order.email] = groupedOrders[order.email]? [...groupedOrders[order.email],order] : [order] }
         
-        const emails:{[key:string]: CreateTaxiDTO[]} = {}
+        for await(const em of Object.values(groupedOrders)) {
+
+
+            for await (const item of em) {
+                const order = await new this.orderModel({...item, status: "open", orderType:item.type, type: 'one-way' ,});
+
+            //Create all database records, filter with zero quantity and create_________________________________________________________
+                item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: order.id,}).save());
+                item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: order.id, }).save());
+                item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: order.id,}).save());
+                item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: order.id,}).save());
+                await order.save();
+
+                console.log(order, "created order");
+
+            //create or update user________________________________________________________________________________________________________
+                const isUser = await this.userModel.findOne({ email: item.email });
+                let user = null;
+                if (!isUser) {
+                    user = await new this.userModel({
+                        email: item.email,
+                        phone: item.phone,
+                        name: item.name,
+                        orders: [order.id],
+                    }).save();
+                    console.log(user, "new user created ");
+                } else {
+                    await this.userModel.findOneAndUpdate({ _id: isUser._id }, { orders: [...isUser.orders, order.id] });
+                    user = await this.userModel.findOne({ _id: isUser._id });
+                    console.log(user, "user updated ");
+                }
+
+                users.push(user, 'user');
+
+
+                if(item.isReturnTrip) {
+                    const returnOrder = await new this.orderModel({
+                        ...item,
+                        status: "open",
+                        type: 'return',
+                        orderType:item.type,
+                        date: item.dateR,
+                        time: item.timeR,
+                        from: item.fromR,
+                        to: item.toR,
+                        flight: item.flightR,
+                        flight2: item.flight2R,
+                        stops: item.stopsR,
+                        departure: item.departureR,
+                        departure2: item.departure2R,
+                        dateNow: false,
+                        orderId: order._id,
+                    });
+
+                    //Create all database records, filter with zero quantity and create_________________________________________________________
+                    item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: returnOrder.id,}).save());
+                    item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: returnOrder.id, }).save());
+                    item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: returnOrder.id,}).save());
+                    item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: returnOrder.id,}).save());
+                    await returnOrder.save();
         
-        //map each car and make different functions
-        data.map((item,index)=>{
+                    console.log(returnOrder, "created return order");
 
-            // //Create all database records, filter with zero quantity and create_________________________________________________________
-            const createdOrder = new this.orderModel({ status: 'active', ...item })
-            item.baggage.filter(item=> item.quantity).map( item => new this.bagModel({ ...item, orderId: createdOrder.id }).save())
-            item.carSeats.filter(item=> item.quantity).map(item => new this.seatsModel({ ...item, orderId: createdOrder.id }).save())
-            item.sport.filter(item=> item.quantity).map(item => new this.sportModel({ ...item, orderId: createdOrder.id }).save())
-            item.pets.filter(item=> item.quantity).map(item =>new this.petsModel({ ...item, orderId: createdOrder.id }).save())
-            createdOrder.save()
+                    await this.userModel.findOneAndUpdate({ _id: user._id }, { orders: [...user.orders, returnOrder.id] });
+                    user = await this.userModel.findOne({ _id: user._id });
+                    console.log(user, "return user updated ");
+                }
+            
+                const calendarEvents = []
+            //create new iCalendar event _______________________________________________________________________________________________
+                const calendar = ical({ name: "one way order" });
+                const parsedDate = moment(item.date + " " + item.time,"MM/DD/YYYY HH:mm");
 
-            const calendar = ical({name: 'My Order'})
-            const parsedDate = moment(item.date +" "+ item.time , 'MM/DD/YYYY HH:mm');
-            calendar.createEvent({
-                start: new Date(parsedDate.toLocaleString()),
-                end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
-                summary: `taxi #${index}`,
-                description: `You ordered beautiful taxi ${index}`,
-                location: 'you soul'
-            })
-
-            this.mailerService.sendMail({
-                to: item[0].email,
-                from: "AndriiIlkiv@gmail.com",
-                subject: "test emails",
-                text: "Hi Malek, this is the test email",
-                attachments: [
-                    {
+                calendar.createEvent({
+                    start: new Date(parsedDate.toLocaleString()),
+                    end: new Date(parsedDate.add(1, "hour").toLocaleString()),
+                    summary: `You order new taxi`,
+                    description: `You ordered beautiful taxi}`,
+                    location: "you soul",
+                });
+            
+                calendarEvents.push({
                         filename: "event.ics",
                         content: calendar.toString(),
                         method: "REQUEST",
-                    },
-                ],
-            });
-
-        })
-
-        // Object.values(emails).map(item=>{
-        //     const calendar = ical({name: 'My Order'})
-
-        //     item.map((car,index) => {
-        //         const parsedDate = moment(car.date +" "+ car.time , 'MM/DD/YYYY HH:mm');
-
-        //         calendar.createEvent({
-        //             start: new Date(parsedDate.toLocaleString()),
-        //             end: new Date(parsedDate.add(1, 'hour').toLocaleString()),
-        //             summary: `taxi #${index}`,
-        //             description: `You ordered beautiful taxi ${index}`,
-        //             location: 'you soul'
-        //         })
-        //     })
-
+                })
             
-        //     this.mailerService.sendMail({
-        //         to: item[0].email,
-        //         from: "AndriiIlkiv@gmail.com",
-        //         subject: "test emails",
-        //         text: "Hi Malek, this is the test email",
-        //         attachments: [
-        //             {
-        //                 filename: "event.ics",
-        //                 content: calendar.toString(),
-        //                 method: "REQUEST",
-        //             },
-        //         ],
-        //     });
+                if(item.isReturnTrip) {
+                    const calendar = ical({ name: "return order" });
+                    const parsedDate = moment(item.dateR + " " + item.timeR,"MM/DD/YYYY HH:mm");
 
-        // })
+                    calendar.createEvent({
+                        start: new Date(parsedDate.toLocaleString()),
+                        end: new Date(parsedDate.add(1, "hour").toLocaleString()),
+                        summary: `You order new taxi`,
+                        description: `You ordered beautiful taxi}`,
+                        location: "you soul",
+                    });
+                
+                    calendarEvents.push({
+                            filename: "event.ics",
+                            content: calendar.toString(),
+                            method: "REQUEST",
+                    })
+                }
+                
+            //Send email ________________________________________________________________________________________________________________
+                const emailText = emailTemplate(item.email, (item.time + ' '+ item.date), user._id)
+                const mailResponses = await this.mailerService.sendMail({
+                    to: item.email,
+                    from: "AndriiIlkiv@gmail.com",
+                    subject: "test emails",
+                    html: emailText,
+                    attachments: calendarEvents,
+                });
 
-        // console.log(emails)
+                console.log(mailResponses,'mail response');
+                responses.push(mailResponses);
+            
+            }
+        }
+        
 
-        return {status: 200, text: 'working mazafaka'}
+        return {
+            users: users,
+            responses: responses,
+            orders: orders,
+        };
+    }
+
+    async getOrders() {
+        return this.orderModel.find().exec();
+    }
+
+    async getOrder(id: string) {
+        return this.orderModel.findOne({'_id':id}).exec();
+    }
+
+    async updateStatus(id: string, status) {
+        
+        return this.orderModel.findOneAndUpdate({'_id':id},{status: status}).exec();
+    }
+    async updateOrder(id: string, order) {
+        return this.orderModel.findOneAndUpdate({'_id':id},{...order}).exec();
     }
 }
+

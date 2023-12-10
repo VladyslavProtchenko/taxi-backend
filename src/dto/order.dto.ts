@@ -1,10 +1,6 @@
 import { IsEmail } from "class-validator";
 
-export class TaxiDTO {
-
-    readonly timeType: number;
-    readonly timeTypeR: number;
-    readonly type: number;
+export class orderDto {
 
     readonly name: string;
     readonly name2: string;
@@ -14,7 +10,6 @@ export class TaxiDTO {
     readonly title2: string;
     readonly title3: string;
 
-    
     @IsEmail()
     readonly email: string;
     @IsEmail()
@@ -35,8 +30,6 @@ export class TaxiDTO {
 
     readonly stops: { [key: string]: string };
 
-    readonly icon: number;
-    readonly icon2: number;
     readonly flight: {
         title: string;
         prefix: string;
@@ -58,28 +51,6 @@ export class TaxiDTO {
     readonly additionalText: string;
 
     readonly isReturnTrip: boolean;
-
-    readonly fromR: string;
-    readonly toR: string;
-    readonly stopsR: { [key: string]: string };
-
-    readonly dateR: string;
-    readonly timeR: string;
-
-    readonly iconR: number;
-    readonly icon2R: number;
-    readonly flightR: {
-        title: string;
-        prefix: string;
-        number: string;
-    };
-    readonly flight2R: {
-        title: string;
-        prefix: string;
-        number: string;
-    };
-    readonly departureR: string;
-    readonly departure2R: string;
 
     readonly carType: string;
     readonly adults: number;

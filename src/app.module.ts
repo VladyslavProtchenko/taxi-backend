@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { OrderModule } from './order/order.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [ 
@@ -20,7 +22,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
       defaults: {
         from: '"No Reply" <no-reply@example.com>',
       },
-    }),
+    }), UsersModule, AuthModule,
   ],
   controllers: [],
   providers: [],

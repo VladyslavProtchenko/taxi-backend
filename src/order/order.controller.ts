@@ -1,19 +1,35 @@
-import { Body, Controller, Get, Injectable, Post } from '@nestjs/common';
+import { Body, Controller, Get, Injectable, Param, Patch, Post } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateTaxiDTO } from '../dto/taxi.dto';
+import { TaxiDTO } from 'src/dto/taxi.dto';
 
 @Controller('order')
 export class OrderController {
 
     constructor(private orderService: OrderService) {}
+
     @Post()
-    create(@Body() orderDto: CreateTaxiDTO[]) {
+    create(@Body() orderDto: TaxiDTO[]) {
         return this.orderService.create(orderDto)
     }
 
     @Get()
-    getOrder(){
-        return 'working mazafaka'
+    getOrders(){
+        return this.orderService.getOrders();
+    }
+
+    @Get(':id')
+    getOrder(@Param('id') id: string,){
+        return this.orderService.getOrder(id);
+    }
+
+    @Patch('status')
+    updateStatus(@Param('id') id: string, @Body('status') status){
+        return this.orderService.updateStatus(id, status)
+    }
+
+    @Patch(':id')
+    updateOrder(@Param('id') id: string, @Body() orderDto: TaxiDTO){
+        return this.orderService.updateOrder(id, orderDto)
     }
 
 }

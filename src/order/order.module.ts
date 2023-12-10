@@ -7,6 +7,7 @@ import { BaggageSchema } from "src/shcemas/baggage.schema";
 import { PetsSchema } from "src/shcemas/pets.schema";
 import { SeatsSchema } from "src/shcemas/seats.schema";
 import { OrderSchema } from "src/shcemas/order.schema";
+import { UserSchema } from "src/shcemas/user.schema";
 
 
 @Module({
@@ -15,9 +16,12 @@ import { OrderSchema } from "src/shcemas/order.schema";
         { name: 'sport', schema: SportSchema },
         { name: 'baggage', schema: BaggageSchema },
         { name: 'pets', schema: PetsSchema }, 
-        { name: 'seats', schema: SeatsSchema }
+        { name: 'seats', schema: SeatsSchema },
+        { name: 'user', schema: UserSchema }
     ])],
     controllers: [OrderController],
     providers: [OrderService],
 })
+
+
 export class OrderModule {}
