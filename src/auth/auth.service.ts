@@ -15,37 +15,29 @@ export class AuthService {
         ){}
 
     async validateUser( email: string, password: string) {
-
         const user = await this.userService.getUserByEmail(email);
-        const hashPass = await bcrypt.hash(password, 5)
-
-        if(user && user.password === hashPass) return user;
-
-        throw new UnauthorizedException('Invalid password ')
+        if(!user) throw new UnauthorizedException('User not exists')
+        
+        if(await bcrypt.compare(password, user.password)) return user;
+        throw new UnauthorizedException('Invalid password')
     } 
 
-    async login(userDto: userDTO ) {
-        
+    async login(user: userDTO ) {
+        const { _id, email, role } = user;
+        return {
+            _id, email,role, token: this.jwtService.sign({ _id: user._id, email: user.email, role: user.role})
+        }
     }
 
-    async registration(userDto: userDTO ) {
-        const candidate = await this.userService.getUserByEmail(userDto.email)
+    async registration(user: userDTO ) {
+        const candidate = await this.userService.getUserByEmail(user.email)
 
         if(candidate) {
             throw new HttpException('User with this email already exists',HttpStatus.BAD_REQUEST )
         }
-        const hashPassword = await bcrypt.hash(userDto.password, 5)
+        const hashPassword = await bcrypt.hash(user.password, 5)
+        const res = await this.userService.create({...user, password: hashPassword})
         
-        const user = await this.userService.create({...userDto, password: hashPassword})
-        
-        return { user }
-    }
-
-    async generateToken(user: User){
-        const payload = {}
-
-        return {
-            token: this.jwtService.sign(payload)
-        }
+        return { res }
     }
 }

@@ -39,7 +39,6 @@ export class OrderService {
 
             for await (const item of em) {
                 const order = await new this.orderModel({...item, status: "open", orderType:item.type, type: 'one-way' ,});
-
             //Create all database records, filter with zero quantity and create_________________________________________________________
                 item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: order.id,}).save());
                 item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: order.id, }).save());
@@ -141,7 +140,7 @@ export class OrderService {
                 }
                 
             //Send email ________________________________________________________________________________________________________________
-                const emailText = emailTemplate(item.email, (item.time + ' '+ item.date), user._id)
+                const emailText = emailTemplate(item.name, (item.time + ' '+ item.date), user._id)
                 const mailResponses = await this.mailerService.sendMail({
                     to: item.email,
                     from: "AndriiIlkiv@gmail.com",
