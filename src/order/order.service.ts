@@ -59,6 +59,7 @@ export class OrderService {
                         phone: item.phone,
                         name: item.name,
                         orders: [order.id],
+                        role:'user',
                     }).save();
                     console.log(user, "new user created ");
                 } else {
