@@ -9,10 +9,10 @@ export const  emailTemplate =(name, dateTime,id) =>{
                 <h2 style="font-size: 18px; margin:8px 0 24px 0;  ">Welcome, ${name}</h2>
                 <div style='padding-left: 10px; margin-bottom: 16px;'>You have ordered taxi at ${dateTime}</div>
                 <div style='display:flex; padding: 10px 0px; align-items:start;'>
-                    <a href='http://localhost:5173/confirm/${id}' style='padding: 8px 24px; margin-right: 8px; color: #2e2e2e;background: #5dff75; border-radius: 20px; text-decoration: none; '>CONFIRM</a>
-                    <a href='http://localhost:5173/editOrder/${id}' style='padding: 8px 24px;margin-right: 8px; color: white; background: #a160ff; border-radius: 20px; text-decoration: none; '>MODIFY</a>
-                    <a href='http://localhost:5173/cancel/${id}' style='padding: 8px 24px;margin-right: 8px;color: #2e2e2e; background: #ff1e8d; border-radius: 20px; text-decoration: none; '>DECLINE</a>
-                    <a href='http://localhost:5173/pending/${id}' style='padding: 8px 24px;margin-right: 8px;color: #2e2e2e; background: #2563ff; border-radius: 20px; text-decoration: none; '>HOLD</a>
+                    <a href='https://taxi-dashboard-seven.vercel.app/confirm/${id}' style='padding: 8px 24px; margin-right: 8px; color: #2e2e2e;background: #5dff75; border-radius: 20px; text-decoration: none; '>CONFIRM</a>
+                    <a href='https://taxi-dashboard-seven.vercel.app/editOrder/${id}' style='padding: 8px 24px;margin-right: 8px; color: white; background: #a160ff; border-radius: 20px; text-decoration: none; '>MODIFY</a>
+                    <a href='https://taxi-dashboard-seven.vercel.app/cancel/${id}' style='padding: 8px 24px;margin-right: 8px;color: white; background: #ff1e8d; border-radius: 20px; text-decoration: none; '>DECLINE</a>
+                    <a href='https://taxi-dashboard-seven.vercel.app/pending/${id}' style='padding: 8px 24px;margin-right: 8px;color: white; background: #2563ff; border-radius: 20px; text-decoration: none; '>HOLD</a>
                 </div>
             </div>
         </div>

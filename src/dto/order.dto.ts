@@ -24,7 +24,7 @@ export class orderDto {
     readonly date: string;
     readonly time: string;
 
-    readonly dateNow: boolean;
+    readonly dateNow?: boolean;
     readonly from: string;
     readonly to: string;
 
@@ -57,21 +57,21 @@ export class orderDto {
     readonly kids: number[];
     readonly babies: number;
 
-    readonly baggage: [{
+    readonly baggage?: [{
         title: string,
         quantity: number,
     }]
-    readonly sport: [{
+    readonly sport?: [{
         title: string,
         quantity: number,
     }]
-    readonly pets: [{
+    readonly pets?: [{
         isOther?:boolean,
         title: string,
         cage:boolean,
         quantity: number,
     }]
-    readonly carSeats: [{
+    readonly carSeats?: [{
         title: string,
         quantity: number,
     }]

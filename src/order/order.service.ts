@@ -12,6 +12,8 @@ import * as moment from "moment";
 import { TaxiDTO } from "src/dto/taxi.dto";
 import { User } from "src/shcemas/user.schema";
 import { emailTemplate } from "./emailTemplate";
+import { orderDto } from "src/dto/order.dto";
+import dayjs from "dayjs";
 
 @Injectable()
 export class OrderService {
@@ -164,7 +166,10 @@ export class OrderService {
     }
 
     async getOrders() {
-        return this.orderModel.find().exec();
+        const res = await this.orderModel.find().exec();
+        res.sort((a,b)=>new Date(b.date).getTime() - new Date(a.date).getTime())
+    
+        return res;
     }
 
     async getOrder(id: string) {
