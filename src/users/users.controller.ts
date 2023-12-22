@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, UsePipes } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { userDTO } from 'src/dto/user.dto';
+import { Types } from 'mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -18,18 +19,18 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') _id: string) {
+  findOne(@Param('id') _id: Types.ObjectId) {
     return this.usersService.getUser(_id);
   }
 
   @Patch(':id')
   @UsePipes(new ValidationPipe())
-  update(@Param('id') id: string, @Body() user: userDTO) {
+  update(@Param('id') id: Types.ObjectId, @Body() user: userDTO) {
     return this.usersService.update(id, user);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
+  delete(@Param('id') id: Types.ObjectId) {
     return this.usersService.delete(id);
   }
 }

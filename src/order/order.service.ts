@@ -12,8 +12,7 @@ import * as moment from "moment";
 import { TaxiDTO } from "src/dto/taxi.dto";
 import { User } from "src/shcemas/user.schema";
 import { emailTemplate } from "./emailTemplate";
-import { orderDto } from "src/dto/order.dto";
-import dayjs from "dayjs";
+import { userDTO } from "src/dto/user.dto";
 
 @Injectable()
 export class OrderService {
@@ -28,43 +27,37 @@ export class OrderService {
     ) {}
 
     async create(data: TaxiDTO[]) {
-        const groupedOrders:{[key:string]:TaxiDTO[]} = {}
         const users = [];
         const orders = [];
         const responses = [];
 
         //Group orders by email address
-        for await (const order of data) { groupedOrders[order.email] = groupedOrders[order.email]? [...groupedOrders[order.email],order] : [order] }
-        
-        for await(const em of Object.values(groupedOrders)) {
-
-
-            for await (const item of em) {
+            for await (const item of data) {
                 const order = await new this.orderModel({...item, status: "open", orderType:item.type, type: 'one-way' ,});
             //Create all database records, filter with zero quantity and create_________________________________________________________
-                item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: order.id,}).save());
-                item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: order.id, }).save());
-                item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: order.id,}).save());
-                item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: order.id,}).save());
+                item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: order._id,}).save());
+                item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: order._id, }).save());
+                item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: order._id,}).save());
+                item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: order._id,}).save());
                 await order.save();
 
                 console.log(order, "created order");
 
             //create or update user________________________________________________________________________________________________________
-                const isUser = await this.userModel.findOne({ email: item.email });
+                const candidate:userDTO = await this.userModel.findOne({ email: item.email });
                 let user = null;
-                if (!isUser) {
+                if (!candidate) {
                     user = await new this.userModel({
                         email: item.email,
                         phone: item.phone,
                         name: item.name,
-                        orders: [order.id],
-                        role:'user',
+                        orders: [order._id],
+                        role:'guest',
                     }).save();
                     console.log(user, "new user created ");
                 } else {
-                    await this.userModel.findOneAndUpdate({ _id: isUser._id }, { orders: [...isUser.orders, order.id] });
-                    user = await this.userModel.findOne({ _id: isUser._id });
+                    await this.userModel.findOneAndUpdate({ _id: candidate._id }, { orders: [...candidate.orders, order._id] });
+                    user = await this.userModel.findOne({ _id: candidate._id });
                     console.log(user, "user updated ");
                 }
 
@@ -91,15 +84,15 @@ export class OrderService {
                     });
 
                     //Create all database records, filter with zero quantity and create_________________________________________________________
-                    item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: returnOrder.id,}).save());
-                    item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: returnOrder.id, }).save());
-                    item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: returnOrder.id,}).save());
-                    item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: returnOrder.id,}).save());
+                    item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: returnOrder._id,}).save());
+                    item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: returnOrder._id, }).save());
+                    item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: returnOrder._id,}).save());
+                    item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: returnOrder._id,}).save());
                     await returnOrder.save();
         
                     console.log(returnOrder, "created return order");
 
-                    await this.userModel.findOneAndUpdate({ _id: user._id }, { orders: [...user.orders, returnOrder.id] });
+                    await this.userModel.findOneAndUpdate({ _id: user._id }, { orders: [...user.orders, returnOrder._id] });
                     user = await this.userModel.findOne({ _id: user._id });
                     console.log(user, "return user updated ");
                 }
@@ -154,11 +147,7 @@ export class OrderService {
 
                 console.log(mailResponses,'mail response');
                 responses.push(mailResponses);
-            
             }
-        }
-        
-
         return {
             users: users,
             responses: responses,

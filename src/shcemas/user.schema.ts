@@ -24,8 +24,7 @@ export class User {
     phone: string;
 
     @Prop()
-    orders: [string];
-
+    orders: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

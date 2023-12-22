@@ -1,28 +1,21 @@
 import { Body, Controller, Get, Post, UseGuards, UsePipes, ValidationPipe,Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { userDTO } from 'src/dto/user.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { AuthGuard } from '@nestjs/passport';
+import { registrationDto } from 'src/dto/registration.dto';
 
 @Controller('auth')
 export class AuthController {
 
-    constructor( 
-            private  authService: AuthService,
-        ){}
+    constructor( private  authService: AuthService ){}
 
-    @UsePipes(new ValidationPipe())
     @Post('login')
-    @UseGuards(LocalAuthGuard)
-    login(@Body() user: userDTO ) {
+    login(@Body() user: { email:string; password:string} ) {
         return this.authService.login(user)
     }
 
-
-    @UsePipes(new ValidationPipe())
     @Post('registration')
-    registration(@Body() user: userDTO ) {
+    registration(@Body() user: registrationDto ) {
         return this.authService.registration(user)
     }
 
