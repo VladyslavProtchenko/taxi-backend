@@ -51,11 +51,13 @@ export class AuthService {
             
             //check if user have a role
             const res =  await this.userService.setAndUpdate(candidate._id, newUser)
+
             return  { status: 201, text: 'created', data: res }
         }
 
         const newUser: newUserDTO = {
             ...user,
+            password: hashPassword,
             role: 'user',
             orders:[]
         }
