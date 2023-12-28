@@ -25,6 +25,7 @@ export class AuthService {
 
         if(!user) return { text: 'user not exist', status: 404 }
         if( user.role === 'guest') return  { text: 'User nor registered', status: 403 }
+        
         if(await bcrypt.compare(password, user.password)) return { status: 201, text: 'login is success', email, token: this.jwtService.sign({ email, password }) }
         return { text: 'Wrong password', status: 401 }
     }
@@ -51,6 +52,7 @@ export class AuthService {
             
             //check if user have a role
             const res =  await this.userService.setAndUpdate(candidate._id, newUser)
+
             return  { status: 201, text: 'created', data: res }
         }
 

@@ -2,7 +2,6 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { raw } from 'mysql2';
 
 
 export type OrderDocument = HydratedDocument<Order>;
