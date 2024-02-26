@@ -33,8 +33,8 @@ import { ConfigModule } from '@nestjs/config';
         port: 587,
         secure: false,
         auth: {
-          user: 'vladyslav25cm@gmail.com',
-          pass: 'bzwu xzdm hepc uqcj',
+          user: 'Ceo@csure.taxi',
+          pass: 'rnuf ocve cipb cyxt',
         },
       },
       defaults: {

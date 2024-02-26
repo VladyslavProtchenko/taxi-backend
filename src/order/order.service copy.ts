@@ -11,9 +11,8 @@ import ical from "ical-generator";
 import * as moment from "moment";
 import { TaxiDTO } from "src/dto/taxi.dto";
 import { User } from "src/shcemas/user.schema";
-import { userDTO } from "src/dto/user.dto";
-import { emailTemplateFr } from "./emailTemplateFr";
 import { emailTemplateEn } from "./emailTemplateEn";
+import { userDTO } from "src/dto/user.dto";
 
 @Injectable()
 export class OrderService {
@@ -27,28 +26,22 @@ export class OrderService {
         private readonly mailerService: MailerService
     ) {}
 
-    async create(data: { list: TaxiDTO[], isFrench: boolean }){
+    async create(list: TaxiDTO[]) {
         const users = [];
         const orders = [];
         const responses = [];
-        
-        console.log(data, 'orders list')
+
         //Group orders by email address
-            for await (const item of data.list) {
-
+            for await (const item of list) {
                 const order = await new this.orderModel({...item, status: "open", orderType:item.type, type: 'one-way' ,});
-
-                //Create all database records, filter with zero quantity and create_________________________________________________________
+            //Create all database records, filter with zero quantity and create_________________________________________________________
                 item.baggage.filter((item) => item.quantity).map((item) =>new this.bagModel({...item,orderId: order._id,}).save());
                 item.carSeats.filter((item) => item.quantity).map((item) =>new this.seatsModel({...item,orderId: order._id, }).save());
                 item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: order._id,}).save());
                 item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: order._id,}).save());
-
                 await order.save();
 
                 console.log(order, "created order");
-
-                orders.push(order)
 
             //create or update user________________________________________________________________________________________________________
                 const candidate:userDTO = await this.userModel.findOne({ email: item.email });
@@ -63,12 +56,13 @@ export class OrderService {
                     }).save();
                     console.log(user, "new user created ");
                 } else {
-                    await this.userModel.findOneAndUpdate({ _id: candidate._id }, { orders: [...candidate.orders, order._id.toString()] });
+                    await this.userModel.findOneAndUpdate({ _id: candidate._id }, { orders: [...candidate.orders, order._id] });
                     user = await this.userModel.findOne({ _id: candidate._id });
                     console.log(user, "user updated ");
                 }
 
                 users.push(user, 'user');
+
 
                 if(item.isReturnTrip) {
                     const returnOrder = await new this.orderModel({
@@ -95,9 +89,7 @@ export class OrderService {
                     item.sport.filter((item) => item.quantity).map((item) =>new this.sportModel({...item,orderId: returnOrder._id,}).save());
                     item.pets.filter((item) => item.quantity).map((item) =>new this.petsModel({...item,orderId: returnOrder._id,}).save());
                     await returnOrder.save();
-
-                    orders.push(returnOrder);
-
+        
                     console.log(returnOrder, "created return order");
 
                     await this.userModel.findOneAndUpdate({ _id: user._id }, { orders: [...user.orders, returnOrder._id] });
@@ -105,8 +97,8 @@ export class OrderService {
                     console.log(user, "return user updated ");
                 }
             
-                //create new iCalendar event _______________________________________________________________________________________________
                 const calendarEvents = []
+            //create new iCalendar event _______________________________________________________________________________________________
                 const calendar = ical({ name: "one way order" });
                 const parsedDate = moment(item.date + " " + item.time,"MM/DD/YYYY HH:mm");
 
@@ -114,7 +106,7 @@ export class OrderService {
                     start: new Date(parsedDate.toLocaleString()),
                     end: new Date(parsedDate.add(1, "hour").toLocaleString()),
                     summary: `You order new taxi`,
-                    description: `You ordered beautiful taxi`,
+                    description: `You ordered beautiful taxi}`,
                     location: "you soul",
                 });
             
@@ -123,7 +115,6 @@ export class OrderService {
                         content: calendar.toString(),
                         method: "REQUEST",
                 })
-                
             
                 if(item.isReturnTrip) {
                     const calendar = ical({ name: "return order" });
@@ -133,7 +124,7 @@ export class OrderService {
                         start: new Date(parsedDate.toLocaleString()),
                         end: new Date(parsedDate.add(1, "hour").toLocaleString()),
                         summary: `You order new taxi`,
-                        description: `You ordered beautiful taxi`,
+                        description: `You ordered beautiful taxi}`,
                         location: "you soul",
                     });
                 
@@ -145,14 +136,10 @@ export class OrderService {
                 }
                 
             //Send email ________________________________________________________________________________________________________________
-                const dateTimeR = item.isReturnTrip ? (item.timeR + ' '+ item.dateR) : null
-                const  emailText = data.isFrench 
-                    ? emailTemplateFr(item.name, (item.time + ' '+ item.date), user._id, dateTimeR) 
-                    : emailTemplateEn(item.name, (item.time + ' '+ item.date), user._id, dateTimeR)
-
+                const emailText = emailTemplateEn(item.name, (item.time + ' '+ item.date), user._id)
                 const mailResponses = await this.mailerService.sendMail({
                     to: item.email,
-                    from: "bonjour.taxi@gmail.com",
+                    from: "AndriiIlkiv@gmail.com",
                     subject: "test emails",
                     html: emailText,
                     attachments: calendarEvents,
